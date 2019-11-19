@@ -130,7 +130,7 @@ public class Retrieve {
 				}
 
 				Map<String, Double> num = new HashMap<>();
-				Map<String, Double> css = new TreeMap<>();
+				Map<Results, Double> css = new TreeMap<>();
 				
 				Map<String, Integer> termCount = new HashMap<>();
 				
@@ -176,16 +176,16 @@ public class Retrieve {
 				}
 				
 				for(String url : num.keySet()) {
-					css.put(url, num.get(url) / Double.valueOf(asString(accum.get(bytes(url)))));
+					css.put(new Results(url, num.get(url)), num.get(url) / Double.valueOf(asString(accum.get(bytes(url)))));
 				}
 				
 				// TODO: not in order
 				Integer count = 0;
-				for(String url : css.keySet()) {
+				for(Results url : css.keySet()) {
 					if(count >= 10) {
 						break;
 					}
-					System.out.println(url + ": " + css.get(url));
+					System.out.println(url.getUrl() + ": " + url.getScore());
 					
 					count++;
 				}
