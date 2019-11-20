@@ -117,7 +117,8 @@ public class Retrieve {
 					iterator.close();
 				}
 			}
-			
+
+			Integer size = Integer.valueOf(asString(stats.get(bytes("corpus"))));
 			Scanner myObj = new Scanner(System.in);  // Create a Scanner object
 
 			System.out.println("Enter term");
@@ -131,9 +132,9 @@ public class Retrieve {
 
 				Map<String, Double> num = new HashMap<>();
 				Map<Results, Double> css = new TreeMap<>();
-				
+
 				Map<String, Integer> termCount = new HashMap<>();
-				
+
 				//print the posting list of the queried terms
 				for(String st : search.split("\\s+")) {
 					if(termCount.containsKey(st)) {
@@ -143,55 +144,68 @@ public class Retrieve {
 						termCount.put(st, 1);
 					}
 				}
-				
+
 				//loop over the terms in the query
 				for(String term : termCount.keySet()) {
-					//Post = [<df, tf, [url, count], [url, count]...]
-					JSONArray post = new JSONArray(asString(tuple.get(bytes(term))));
-					
-					//loop over the urls that contain the given term
-					for(int i = 2; i < post.length(); i++) {
-						//URL = [url, count]
-						JSONArray urlArr = post.getJSONArray(i);
-						String url = urlArr.getString(0);
-						
-						//calculate tf-idf scores for the query and the document
-						//use the term frequency in the query
-						//increment the corpus size and document frequency by 1
-						Double q_tfidf = (1 + Math.log10(termCount.get(term))) * ((Math.log10(urls.size() + 1) / (post.getDouble(0) + 1)));
-						Double d_tfidf = (1 + Math.log10(urlArr.getDouble(1))) * ((Math.log10(urls.size() + 1) / (post.getDouble(0) + 1)));
-						
-						//if the document is already in the numerator map then add the new product
-						if(num.containsKey(url)) {
-							num.put(url, num.get(url) + (q_tfidf * d_tfidf));
+					//ensure that the term was in the posting list
+					if(tuple.get(bytes(term)) != null) {
+						//Post = [<df, tf, [url, count], [url, count]...]
+						JSONArray post = new JSONArray(asString(tuple.get(bytes(term))));
+						Double secondPart = Math.log10((size + 1) / (post.getDouble(0) + 1));
+
+						Double q_tfidf = (1 + Math.log10(termCount.get(term))) * secondPart;
+
+						//loop over the urls that contain the given term
+						for(int i = 2; i < post.length(); i++) {
+							//URL = [url, count]
+							JSONArray urlArr = post.getJSONArray(i);
+							String url = urlArr.getString(0);
+
+
+							//calculate tf-idf scores for the query and the document
+							//use the term frequency in the query
+							//increment the corpus size and document frequency by 1
+							Double d_tfidf = (1 + Math.log10(urlArr.getDouble(1))) * secondPart;
+
+							//if the document is already in the numerator map then add the new product
+							if(num.containsKey(url)) {
+								num.put(url, num.get(url) + (q_tfidf * d_tfidf));
+							}
+							else {
+								num.put(url, q_tfidf * d_tfidf);
+							}
 						}
-						else {
-							num.put(url, q_tfidf * d_tfidf);
-						}
-						System.out.println(url);
-						System.out.println("q_tf: " + termCount.get(term) + "  q_tfidf: " + q_tfidf);
-						System.out.println("d_tf: " + urlArr.getDouble(1) + "  d_tfidf: " + d_tfidf);
-						System.out.println(asString(accum.get(bytes(url))));
 					}
 				}
-				
+
+				//calculate the cosine similarity score
 				for(String url : num.keySet()) {
-					css.put(new Results(url, num.get(url)), num.get(url) / Double.valueOf(asString(accum.get(bytes(url)))));
+					css.put(new Results(url, num.get(url) / Double.valueOf(asString(accum.get(bytes(url))))), num.get(url) / Double.valueOf(asString(accum.get(bytes(url)))));
 				}
-				
-				// TODO: not in order
+
+
+				System.out.println("");
+				if(css.size() == 0) {
+					System.out.println("No results were found");
+				}
+				else {
+					System.out.println("Top 10 Results:");
+				}
+					
 				Integer count = 0;
 				for(Results url : css.keySet()) {
 					if(count >= 10) {
 						break;
 					}
-					System.out.println(url.getUrl() + ": " + url.getScore());
-					
+					System.out.println("    " + url.getUrl() + ": " + url.getScore());
+
 					count++;
 				}
+				
 
 
 
+				System.out.println("");
 				System.out.println("");
 				System.out.println("Enter term");
 			}

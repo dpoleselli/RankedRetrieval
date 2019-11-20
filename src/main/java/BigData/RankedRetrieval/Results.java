@@ -24,6 +24,6 @@ public class Results implements Comparable<Results> {
 	@Override
 	public int compareTo(Results o) {
 		// TODO Auto-generated method stub
-		return this.getScore() > o.getScore() ? 1 : -1;
+		return this.getScore() <= o.getScore() ? 1 : -1;
 	}
 }
