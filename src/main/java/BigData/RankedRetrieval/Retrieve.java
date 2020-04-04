@@ -11,6 +11,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
@@ -28,6 +29,7 @@ public class Retrieve {
 	 * args[1] = reset?
 	 */
 	public static void main(String[] args) throws FileNotFoundException, IOException {
+		long tim = System.currentTimeMillis();
 		//set of all urls; can be used for the corpus size
 		Set<String> urls = new HashSet<>();
 
@@ -117,7 +119,7 @@ public class Retrieve {
 					iterator.close();
 				}
 			}
-
+			System.out.println("processing time: " + ((System.currentTimeMillis() - tim) / 1000 / 60));
 			Integer size = Integer.valueOf(asString(stats.get(bytes("corpus"))));
 			Scanner myObj = new Scanner(System.in);  // Create a Scanner object
 
@@ -136,7 +138,8 @@ public class Retrieve {
 				Map<String, Integer> termCount = new HashMap<>();
 
 				//print the posting list of the queried terms
-				for(String st : search.split("\\s+")) {
+				for(String st : search.toLowerCase(Locale.US).split("\\s+")) {
+					System.out.println(st);
 					if(termCount.containsKey(st)) {
 						termCount.put(st, termCount.get(st) + 1);
 					}
